@@ -217,11 +217,6 @@ func reshapeNode(node unstructured.Unstructured, pods []interface{}, events []in
 	return unstructured.Unstructured{Object: out}
 }
 
-func setIfPresent(m map[string]interface{}, key string, value interface{}) {
-	if value != nil {
-		m[key] = value
-	}
-}
 
 func extractPod(pod unstructured.Unstructured) map[string]interface{} {
 	spec, _ := pod.Object["spec"].(map[string]interface{})

@@ -38,6 +38,9 @@ func main() {
 		allowedNS      string
 		allowedSecrets string
 		clusterScoped  bool
+		severity       string
+		alertState     string
+		silences       bool
 	)
 
 	runCmd := &cobra.Command{
@@ -67,6 +70,12 @@ func main() {
 				act = actions.NewPatchAction()
 			case "delete":
 				act = actions.NewDeleteAction()
+			case "list-alerts":
+				act = actions.NewListAlertsAction()
+				if namespace == "" {
+					namespace = "openshift-monitoring"
+				}
+				resource = "services"
 			case "describe-nodes":
 				act = actions.NewDescribeNodesAction()
 				clusterScoped = true
@@ -82,6 +91,15 @@ func main() {
 			params := make(map[string]string)
 			if patchBody != "" {
 				params["patch"] = patchBody
+			}
+			if severity != "" {
+				params["severity"] = severity
+			}
+			if alertState != "" {
+				params["state"] = alertState
+			}
+			if silences {
+				params["silences"] = "true"
 			}
 
 			result := exec.Execute(context.Background(), executor.Request{
@@ -145,6 +163,9 @@ func main() {
 	runCmd.Flags().StringVar(&allowedNS, "allowed-namespaces", "", "comma-separated namespace allowlist (defaults to --namespace)")
 	runCmd.Flags().StringVar(&allowedSecrets, "allowed-secrets", "", "comma-separated secret allowlist (namespace/name)")
 	runCmd.Flags().BoolVar(&clusterScoped, "cluster-scoped", false, "target a cluster-scoped resource (e.g. nodes, namespaces, clusterroles)")
+	runCmd.Flags().StringVar(&severity, "severity", "", "alert severity filter: critical, warning (list-alerts)")
+	runCmd.Flags().StringVar(&alertState, "alert-state", "", "alert state: firing, pending, all (list-alerts)")
+	runCmd.Flags().BoolVar(&silences, "silences", false, "include active silences (list-alerts)")
 
 	_ = runCmd.MarkFlagRequired("action")
 

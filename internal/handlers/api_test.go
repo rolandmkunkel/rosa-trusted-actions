@@ -66,12 +66,12 @@ func TestAPIHandler_Catalog(t *testing.T) {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if catalog.Total != 4 {
-		t.Errorf("Expected 4 actions, got %d", catalog.Total)
+	if catalog.Total != 5 {
+		t.Errorf("Expected 5 actions, got %d", catalog.Total)
 	}
 
-	if len(catalog.Items) != 4 {
-		t.Errorf("Expected 4 items, got %d", len(catalog.Items))
+	if len(catalog.Items) != 5 {
+		t.Errorf("Expected 5 items, got %d", len(catalog.Items))
 	}
 }
 

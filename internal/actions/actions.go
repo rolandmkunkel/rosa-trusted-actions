@@ -24,6 +24,7 @@ type ActionRequest struct {
 	Target         ResourceTarget
 	ClusterVersion string
 	Params         map[string]string
+	PodExecutor    backplane.PodExecutor
 }
 
 type ActionResult struct {
@@ -35,6 +36,14 @@ type Action interface {
 	Name() string
 	RequiredRBAC(target ResourceTarget) []backplane.RBACRule
 	Execute(ctx context.Context, client dynamic.Interface, req ActionRequest) (*ActionResult, error)
+}
+
+// PodExecAction is implemented by actions that need pod exec access
+// (e.g. querying Prometheus via curl inside the container). The executor
+// only creates a pod executor session when the action implements this interface.
+type PodExecAction interface {
+	Action
+	UsesPodExec() bool
 }
 
 func resourceClient(client dynamic.Interface, gvr schema.GroupVersionResource, target ResourceTarget) (dynamic.ResourceInterface, error) {
@@ -55,4 +64,10 @@ func scopeLabel(namespace string) string {
 		return "cluster scope"
 	}
 	return namespace
+}
+
+func setIfPresent(m map[string]interface{}, key string, value interface{}) {
+	if value != nil {
+		m[key] = value
+	}
 }
