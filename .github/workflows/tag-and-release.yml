@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   release:
-    if: github.repository == 'openshift-online/rosa-trusted-actions'
+    if: github.repository == 'rolandmkunkel/rosa-trusted-actions'
     name: tag and release
     runs-on: ubuntu-latest
     steps:
