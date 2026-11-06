@@ -1,0 +1,47 @@
+# goreleaser config for the RTA CLI binary.
+# The server is released separately via Konflux/Containerfile.
+#
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: rta
+
+monorepo:
+  tag_prefix: rta/
+
+builds:
+  - id: rta
+    binary: rta
+    targets:
+      - linux_amd64
+    main: ./cmd/rta
+    ldflags:
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Version={{ .Version }}
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Commit={{ .Commit }}
+      - -X github.com/openshift-online/rosa-trusted-actions/internal/rta.BuildDate={{ .Date }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  name_template: "RTA CLI {{ .Tag }}"
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).

@@ -76,25 +76,32 @@ build-cli: ## Build the action-cli binary
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(CLI_NAME) $(CLI_PATH)
 
-# Version stamping for rta
-RTA_VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-RTA_COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
-RTA_DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-RTA_LDFLAGS  = -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Version=$(RTA_VERSION) \
-               -X github.com/openshift-online/rosa-trusted-actions/internal/rta.Commit=$(RTA_COMMIT) \
-               -X github.com/openshift-online/rosa-trusted-actions/internal/rta.BuildDate=$(RTA_DATE)
-
-.PHONY: build-rta
-build-rta: ## Build the rta client binary
-	@echo "Building $(RTA_NAME)..."
-	@mkdir -p $(BUILD_DIR)
-	go build -ldflags '$(RTA_LDFLAGS)' -o $(BUILD_DIR)/$(RTA_NAME) $(RTA_PATH)
-
 .PHONY: build-test-client
 build-test-client: ## Build the test-client binary
 	@echo "Building $(TEST_CLIENT_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(TEST_CLIENT_NAME) $(TEST_CLIENT_PATH)
+
+GORELEASER_VERSION ?= v2.20.0
+
+.PHONY: download-goreleaser
+download-goreleaser: ## Download goreleaser for local release testing
+	@installed=$$(goreleaser --version 2>/dev/null | grep -oP 'goreleaser version \K[^\s]+' || echo ""); \
+	wanted=$$(echo "$(GORELEASER_VERSION)" | sed 's/^v//'); \
+	if [ "$$installed" = "$$wanted" ]; then \
+		echo "goreleaser $$wanted already installed"; \
+	else \
+		echo "Installing goreleaser $(GORELEASER_VERSION)..."; \
+		go install github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION); \
+	fi
+
+.PHONY: build-rta
+build-rta: download-goreleaser ## Build the rta client binary (snapshot, current OS/arch)
+	goreleaser build --snapshot --clean --single-target -o $(BUILD_DIR)/$(RTA_NAME)
+
+.PHONY: build-rta-all
+build-rta-all: download-goreleaser ## Build rta for all release targets (snapshot)
+	goreleaser build --snapshot --clean
 
 .PHONY: build-linux
 build-linux: generate ## Build Linux binary
